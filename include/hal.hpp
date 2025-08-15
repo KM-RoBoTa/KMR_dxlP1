@@ -1,7 +1,7 @@
 /**
  *****************************************************************************
  * @file            hal.hpp
- * @brief           Declare the Hal class
+ * @brief           Define the Hal class
  *****************************************************************************
  * @copyright
  * Copyright 2021-2024 Kamilo Melo        \n
