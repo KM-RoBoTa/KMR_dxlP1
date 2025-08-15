@@ -19,9 +19,6 @@ using namespace std;
 namespace KMR::dxlP1
 {
 
-const uint8_t INDIR_OFFSET = 2;
-const uint8_t PARAM_OFFSET = 1;
-
 /*
  *****************************************************************************
  *                                Initializations
@@ -75,7 +72,7 @@ void Handler::getDataByteSize()
     if (m_ids.size() == 1)
         length = m_hal->getControlFieldFromModel(m_ids[0], m_field).length;
 
-    m_data_byte_size += length;
+    m_data_byte_size = length;
 }
 
 
@@ -128,22 +125,5 @@ void Handler::getConversionVariables()
         m_offsets[i] = offset;
     }
 } 
-
-/*
- *****************************************************************************
- *                        Security checking functions
- ****************************************************************************/
-
-/**
- * @brief       Check if query field is handled by this specific handler
- * @param[in]   field Query control field
- */
-void Handler::checkFieldValidity(ControlTableItem field)
-{
-    if (field != m_field) {
-        cout << "Error: field not handled by this handler!" << endl;   
-        exit(1);
-    }
-}
 
 }

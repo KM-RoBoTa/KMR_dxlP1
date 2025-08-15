@@ -54,8 +54,6 @@ protected:
 			Hal* hal);
 	virtual ~Handler() = default;				// Dstr needs to be virtual to avoid undef. behavior
 
-	void checkFieldValidity(ControlTableItem field);
-
 	// Methods that need to be implemented in child classes
 	virtual void clearParam() = 0; // Pure virtual function
 
