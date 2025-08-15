@@ -15,6 +15,7 @@
 #include "structures.hpp"
 
 #include "motor_models/AX_12A.hpp"
+#include "motor_models/MX_64.hpp"
 
 namespace KMR::dxlP1
 {
@@ -23,5 +24,6 @@ namespace KMR::dxlP1
 // thus does not live inside namespaces) 
 
 const int MODEL_NBR_AX_12A      = 12;
+const int MODEL_NBR_MX_64       = 310;
 
 }
