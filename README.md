@@ -3,6 +3,7 @@
 TODO:
 - control mode
 - multiturn + the overflow
+- check if AX12-A position offset is correct
 - to do: reader. !!bulk read only works with MX, use read instead
 
 Library for an easy use of Dynamixel motors.  

@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <cmath>
+
 #include "structures.hpp"
 
 #include "motor_models/AX_12A.hpp"
@@ -25,5 +27,10 @@ namespace KMR::dxlP1
 
 const int MODEL_NBR_AX_12A      = 12;
 const int MODEL_NBR_MX_64       = 310;
+
+
+// Position offsets to get to our custom reference
+const float POS_OFFSET_DEFAULT = M_PI;
+const float POS_OFFSET_AX12_A = 2.61799;  // [rad]. Equivalent to 150°
 
 }

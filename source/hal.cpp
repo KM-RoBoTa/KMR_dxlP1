@@ -18,7 +18,6 @@ using namespace std;
 
 namespace KMR::dxlP1
 
-#define POS_OFFSET_DEFAULT 3.14159265358979323846264338327950288 // M_PI
 {
 
 /**
@@ -82,10 +81,17 @@ float Hal::getPositionOffset(int modelNumber)
 {
     float offset = 0;
 
-    // Insert any special case here (eg AX-12A in protocol 1)
-    offset = POS_OFFSET_DEFAULT;
-            
-    // TODO
+    switch (modelNumber)
+    {
+    case MODEL_NBR_AX_12A:
+        offset = POS_OFFSET_AX12_A;
+        break;
+    
+    default:
+        offset = POS_OFFSET_DEFAULT;
+        break;
+    }
+
     return offset;
 }
 
