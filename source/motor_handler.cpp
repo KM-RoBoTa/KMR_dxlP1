@@ -57,7 +57,7 @@ MotorHandler::MotorHandler(vector<int> ids, const char *port_name, int baudrate)
         //m_speedWriter = getNewWriter(vector<ControlTableItem>{GOAL_VELOCITY}, m_ids);
         //m_currentWriter = getNewWriter(vector<ControlTableItem>{GOAL_CURRENT}, m_ids);
         //m_PWMWriter = getNewWriter(vector<ControlTableItem>{GOAL_PWM}, m_ids);
-        //m_positionReader = getNewReader(vector<ControlTableItem>{PRESENT_POSITION}, m_ids);
+        m_positionReader = getNewReader(ControlTableItem::PRESENT_POSITION, m_ids);
         //m_speedReader = getNewReader(vector<ControlTableItem>{PRESENT_VELOCITY}, m_ids);
         //m_currentReader = getNewReader(vector<ControlTableItem>{PRESENT_CURRENT}, m_ids);
         //m_PWMReader = getNewReader(vector<ControlTableItem>{PRESENT_PWM}, m_ids);
@@ -76,10 +76,10 @@ MotorHandler::~MotorHandler()
     deleteWriter(m_speedWriter);
     deleteWriter(m_currentWriter);
     deleteWriter(m_PWMWriter);
-    //deleteReader(m_speedReader);
-    //deleteReader(m_positionReader);
-    //deleteReader(m_currentReader);
-    //deleteReader(m_PWMReader);
+    deleteReader(m_speedReader);
+    deleteReader(m_positionReader);
+    deleteReader(m_currentReader);
+    deleteReader(m_PWMReader);
 
     // Security against double freeing
     m_motorEnableWriter = nullptr;
@@ -87,10 +87,10 @@ MotorHandler::~MotorHandler()
     m_speedWriter = nullptr;
     m_currentWriter = nullptr;
     m_PWMWriter = nullptr;
-    //m_positionReader = nullptr;
-    //m_speedReader = nullptr;
-    //m_currentReader = nullptr;
-    //m_PWMReader = nullptr;
+    m_positionReader = nullptr;
+    m_speedReader = nullptr;
+    m_currentReader = nullptr;
+    m_PWMReader = nullptr;
 
     // Delete the Hal
     delete m_hal;
@@ -190,7 +190,7 @@ Writer* MotorHandler::getNewWriter(ControlTableItem field, vector<int> ids)
  * @param   ids IDs of motors to be handled by the new reader
  * @return  New Reader object
  */
-/*Reader* MotorHandler::getNewReader(vector<ControlTableItem> fields, vector<int> ids)
+Reader* MotorHandler::getNewReader(ControlTableItem field, vector<int> ids)
 {
     // Get the list of models corresponding to the ids
     vector<int> models(ids.size());
@@ -203,9 +203,9 @@ Writer* MotorHandler::getNewWriter(ControlTableItem field, vector<int> ids)
         models[i] = m_models[i];
     }
 
-    Reader* reader = new Reader(fields, ids, models, portHandler_, packetHandler_, m_hal, 0);
+    Reader* reader = new Reader(field, ids, models, portHandler_, packetHandler_, m_hal);
     return reader;
-}*/
+}
 
 /**
  * @brief   Delete a Writer object, previously created with getNewWriter()
@@ -221,11 +221,11 @@ void MotorHandler::deleteWriter(Writer* writer)
  * @brief   Delete a Reader object, previously created with getNewReader()
  * @param   reader Reader object to be deleted
  */
-/*void MotorHandler::deleteReader(Reader* reader)
+void MotorHandler::deleteReader(Reader* reader)
 {
     delete reader;
     reader = nullptr; // Security in case of double freeing
-}*/
+}
 
 
 /*
@@ -618,18 +618,16 @@ void MotorHandler::setPositions(std::vector<float> positions)
  * @param[out]  positions [Output] Vector to hold the feedback positions [rad]
  * @return      1 if reading was successful, 0 otherwise
  */
-/*
 bool MotorHandler::getPositions(std::vector<float>& positions)
 {
-    bool readSuccess = m_positionReader->syncRead();
-    if (readSuccess) {
-        positions = m_positionReader->getReadingResults();
-        return true;
-    }
-    else
-        return false;
+    timespec start = time_s();
+    m_positionReader->read(positions);
+    timespec end = time_s();
+    double elapsed = get_delta_us(end, start);
+    cout << "elapsed: " << elapsed << " us " << endl;
+    return 1;
 }
-*/
+
 
 /**
  * @brief       Set the speeds of all motors

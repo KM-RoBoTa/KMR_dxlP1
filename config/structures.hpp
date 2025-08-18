@@ -77,6 +77,8 @@ struct Field {
  * @brief   General structure of a Dynamixel control table
  */
 struct ControlTable {
+    bool bulkRead = 0;  // If a model technically supports bulkRead (= MX or X series)
+
     Field modelNumber;
     Field firmware;
     Field id;

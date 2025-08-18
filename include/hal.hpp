@@ -38,6 +38,7 @@ public:
     float getPositionOffset(int modelNumber);
     Field getControlFieldFromModel(int modelNumber, ControlTableItem item);
     Motor getMotorFromID(int id);
+    bool bulkReadFromModel(int modelNumber);
     
     // Multiturn functionalities
     

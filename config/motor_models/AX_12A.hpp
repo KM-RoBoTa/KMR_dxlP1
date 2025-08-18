@@ -23,6 +23,8 @@ namespace KMR::dxlP1
 struct AX_12A_P1 : ControlTable {
 	AX_12A_P1 ()
     {
+        bulkRead = 0;
+
 		// EEPROM
         modelNumber.addr = 0;
         modelNumber.length = 2;

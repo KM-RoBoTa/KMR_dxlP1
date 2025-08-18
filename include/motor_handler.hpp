@@ -13,7 +13,7 @@
 #pragma once
 
 #include "writer.hpp"
-//#include "reader.hpp"
+#include "reader.hpp"
 
 namespace KMR::dxlP1
 {
@@ -40,9 +40,9 @@ public:
     // Easy handlers creations
     
     Writer* getNewWriter(ControlTableItem field, std::vector<int> ids);
-    //Reader* getNewReader(std::vector<ControlTableItem> fields, std::vector<int> ids);
+    Reader* getNewReader(ControlTableItem field, std::vector<int> ids);
     void deleteWriter(Writer* writer);
-    //void deleteReader(Reader* reader);
+    void deleteReader(Reader* reader);
     
     // Enable/disable motor torque and rebooting
 
@@ -78,7 +78,7 @@ public:
     // Control and feedback commands
 
     void setPositions(std::vector<float> positions);
-    //bool getPositions(std::vector<float>& positions);
+    bool getPositions(std::vector<float>& positions);
     //void setSpeeds(std::vector<float> speeds);
     //bool getSpeeds(std::vector<float>& speeds);
     //void setCurrents(std::vector<float> currents);
@@ -106,10 +106,10 @@ private:
     Writer* m_speedWriter = nullptr;
     Writer* m_currentWriter = nullptr;
     Writer* m_PWMWriter = nullptr;
-    //Reader* m_positionReader = nullptr;
-    //Reader* m_speedReader = nullptr;
-    //Reader* m_currentReader = nullptr;
-    //Reader* m_PWMReader = nullptr;
+    Reader* m_positionReader = nullptr;
+    Reader* m_speedReader = nullptr;
+    Reader* m_currentReader = nullptr;
+    Reader* m_PWMReader = nullptr;
 
     void init_comm(const char *port_name, int baudrate, float protocol_version);
     void check_comm();

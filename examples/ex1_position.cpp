@@ -37,7 +37,6 @@
 
 using namespace std;
 
-
 // --------------------------------------------------------------------------- //
 // Id(s) of motor(s)
 vector<int> ids = {1};  // EDIT HERE FOR YOUR MOTOR(s)
@@ -69,7 +68,7 @@ int main()
     vector<float> goalPositions(nbrMotors, 0);
     vector<float> fbckPositions(nbrMotors, 0);
 
-    cout << endl << endl << " ---------- Showcase of ignored commands when above set limits ---------" << endl;
+    /*cout << endl << endl << " ---------- Showcase of ignored commands when above set limits ---------" << endl;
     sleep(3);
     robot.setPositions(goalPositions);
     sleep(1);
@@ -102,7 +101,7 @@ int main()
     robot.setPositions(goalPositions);
     cout << "Going to 0" << endl;
     sleep(2);
-
+*/
 
     cout << endl << endl << " ---------- Smooth position command, also with set limits ---------" << endl;
     sleep(3);
@@ -114,15 +113,15 @@ int main()
     while (ctr < MAX_CTR) {
         // Get feedback
         timespec start = KMR::dxlP1::time_s();
-        //robot.getPositions(fbckPositions);
+        robot.getPositions(fbckPositions);
 
-        //cout << "Positions: "; 
-        //for (int i=0; i<nbrMotors; i++) {
-        //    cout << fbckPositions[i] << " rad";
-        //    if (i != (nbrMotors-1))
-        //        cout << ", ";
-        //}
-        //cout << endl;
+        cout << "Positions: "; 
+        for (int i=0; i<nbrMotors; i++) {
+            cout << "Goal position: " << goalPositions[i] << ", fbck: " << fbckPositions[i] << " rad";
+            if (i != (nbrMotors-1))
+                cout << ", ";
+        }
+        cout << endl;
 
         // Send new goal positions
         for (int i=0; i<nbrMotors; i++)
@@ -146,15 +145,18 @@ int main()
                 forward = true;
             }
         }
-
+        angle = -M_PI/2; // DEBUG
         // Increment counter and set the control loop to 5ms
         ctr++;
 
         timespec end = KMR::dxlP1::time_s();
         double elapsed = KMR::dxlP1::get_delta_us(end, start);
         double toSleep_us = CTRL_PERIOD_US-elapsed;
-        if (toSleep_us < 0)
+        if (toSleep_us < 0) {
             toSleep_us = 0;
+            cout << "overtime" << endl;
+        }
+
         usleep(toSleep_us);
     }
 

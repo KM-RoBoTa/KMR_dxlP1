@@ -109,6 +109,11 @@ Field Hal::getControlFieldFromModel(int modelNumber, ControlTableItem item)
     return field;
 }
 
+bool Hal::bulkReadFromModel(int modelNumber)
+{
+    ControlTable motor = getControlTable(modelNumber);
+    return motor.bulkRead;
+}
 
 /*****************************************************************************
  *                     Get hardware info, in private scope

@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_library(${PROJECT_NAME} 
             source/motor_handler.cpp
             source/handler.cpp
-            #source/reader.cpp
+            source/reader.cpp
             source/writer.cpp
             source/hal.cpp
             source/utils.cpp
