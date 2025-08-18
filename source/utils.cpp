@@ -18,6 +18,9 @@
 
 using namespace std;
 
+namespace KMR::dxlP1
+{
+
 /**
  * @brief       Convert degrees to radians
  * @param[in]   deg Angle in degrees
@@ -88,4 +91,6 @@ std::string convertToHex(int dec)
     std::string res ( ss.str() );
 
     return res;
+}
+
 }

@@ -2,7 +2,8 @@
 
 TODO:
 - control mode
-
+- multiturn + the overflow
+- to do: reader. !!bulk read only works with MX, use read instead
 
 Library for an easy use of Dynamixel motors.  
 It abstracts the hardware (no need to concern yourself with memory addresses) and automates the creation of reading/writing handlers.

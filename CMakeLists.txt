@@ -6,11 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 
 # Source files
 add_library(${PROJECT_NAME} 
-            source/KMR_dxlP1_robot.cpp
-            source/KMR_dxlP1_handler.cpp
-            source/KMR_dxlP1_reader.cpp
-            source/KMR_dxlP1_writer.cpp
-            source/KMR_dxlP1_hal.cpp)
+            source/motor_handler.cpp
+            source/handler.cpp
+            #source/reader.cpp
+            source/writer.cpp
+            source/hal.cpp
+            source/utils.cpp
+        )
 
 # Directories containing header files
 target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -18,15 +20,15 @@ target_include_directories(${PROJECT_NAME} PUBLIC include)
 # Locations of the used libraries
 target_link_directories(${PROJECT_NAME} PUBLIC /usr/local/lib)
 
-# Link the used libraries: dynamixel and yaml-cpp
-target_link_libraries(${PROJECT_NAME} yaml-cpp)
-
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     message(STATUS "Processor used: " ${CMAKE_SYSTEM_PROCESSOR})
-    target_link_libraries(KMR_dxlP1 dxl_x64_cpp)
+    target_link_libraries(${PROJECT_NAME} dxl_x64_cpp)
 elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "armv7l")
     message(STATUS "Processor used: " ${CMAKE_SYSTEM_PROCESSOR})
-    target_link_libraries(KMR_dxlP1 dxl_sbc_cpp)
+    target_link_libraries(${PROJECT_NAME} dxl_sbc_cpp)
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    message(STATUS "Processor used: " ${CMAKE_SYSTEM_PROCESSOR})
+    target_link_libraries(${PROJECT_NAME} dxl_sbc_cpp)
 else()
     message(FATAL_ERROR "ERROR: Unknown processor architecture! CMake will exit")
 endif()
@@ -36,3 +38,8 @@ option(BUILD_DOCS "Generate Docs" ON)
 if(BUILD_DOCS)
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/docs)  # path to docs' cmakelists
 endif()
+
+
+# Generate example executables
+add_executable(ex1_position examples/ex1_position.cpp)
+target_link_libraries(ex1_position ${PROJECT_NAME})

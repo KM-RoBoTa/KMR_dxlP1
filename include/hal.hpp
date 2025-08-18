@@ -30,9 +30,8 @@ namespace KMR::dxlP1
  */
 class Hal {
 public:
-    Hal();
+    Hal(std::vector<int> ids, int nbrMotors, std::vector<int> models);
     ~Hal();
-    void init(std::vector<int> ids, int nbrMotors, std::vector<int> models);
 
     // Get hardware information
 

@@ -90,26 +90,32 @@ void Writer::populateDataParam(int32_t data, int motor_idx)
         cout << "Wrong number of parameters to populate the parametrized matrix!" << endl;
 }
 
-
 /**
- * @brief   Send the previously prepared data with addDataToWrite() to motors
+ * @brief       Send the previously prepared data with addDataToWrite to motors
+ * @param[in]   ids List of motors who will receive data
  */
-void Writer::syncWrite()
+bool Writer::syncWrite(std::vector<int> ids)
 {
     clearParam();
 
-    for(int i=0; i<m_nbrMotors; i++) {
-        bool dxl_addparam_result = addParam((uint8_t) m_ids[i], m_dataParam[i]);
+    for(int i=0; i<ids.size(); i++) {
+        int idx = getIndex(m_ids, ids[i]);
+        bool dxl_addparam_result = addParam((uint8_t) ids[i], m_dataParam[idx]);
 
         if (dxl_addparam_result != true) {
-            cout << "Adding parameters failed for ID = " << m_ids[i] << endl;
+            cout << "Adding parameters failed for ID = " << ids[i] << endl;
+            return 0;
         }
     }
 
     // Send the packet
     int dxl_comm_result = m_groupSyncWriter->txPacket();
-    if (dxl_comm_result != COMM_SUCCESS)
+    if (dxl_comm_result != COMM_SUCCESS) {
         cout << packetHandler_->getTxRxResult(dxl_comm_result) << endl;
+        return 0;
+    }
+
+    return 1;
 }
 
 

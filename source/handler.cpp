@@ -36,14 +36,14 @@ namespace KMR::dxlP1
 Handler::Handler(ControlTableItem field, vector<int> ids, vector<int> models,
                  dynamixel::PacketHandler* packetHandler, dynamixel::PortHandler* portHandler,
                  Hal* hal)
-{
+{   
     m_ids = ids;
     m_models = models;
     m_nbrMotors = ids.size();
     packetHandler_ = packetHandler;
     portHandler_ = portHandler;
     m_hal = hal;
-    m_field = field;   
+    m_field = field;
 
     getDataByteSize();
     checkMotorCompatibility();
@@ -61,7 +61,7 @@ void Handler::getDataByteSize()
     
     for (int j=1; j<m_ids.size(); j++){
         length = m_hal->getControlFieldFromModel(m_models[j], m_field).length;
-        length_prev = m_hal->getControlFieldFromModel(m_ids[j-1], m_field).length;       
+        length_prev = m_hal->getControlFieldFromModel(m_models[j-1], m_field).length;       
 
         if(length != length_prev){
             cout << "Motors " << m_ids[j] << " and " << m_ids[j-1] << " have incompatible field lengths!" << endl;
@@ -70,7 +70,7 @@ void Handler::getDataByteSize()
     }
 
     if (m_ids.size() == 1)
-        length = m_hal->getControlFieldFromModel(m_ids[0], m_field).length;
+        length = m_hal->getControlFieldFromModel(m_models[0], m_field).length;
 
     m_data_byte_size = length;
 }

@@ -32,12 +32,16 @@ public:
             Hal* hal);
     ~Writer();
 
-    template <typename T> void addDataToWrite(std::vector<T> data);
-    void syncWrite();
+    template <typename T> bool send(std::vector<T> data, std::vector<int> ids);
+    template <typename T> bool send(std::vector<T> data);
+    template <typename T> bool send(T data, int id);
 
 private:
     dynamixel::GroupSyncWrite *m_groupSyncWriter = nullptr;
     uint8_t **m_dataParam = nullptr; // Table containing all parametrized data to be sent
+
+    template <typename T> bool calculateParametrizedVals(std::vector<T> data, std::vector<int> ids);
+    bool syncWrite(std::vector<int> ids);
 
     void populateDataParam(int32_t data, int motor_idx);
     void clearParam();
@@ -59,29 +63,69 @@ private:
  * @param[in]   field Control field of the data (eg goal position)
  */
 template <typename T>
-void Writer::addDataToWrite(std::vector<T> data)
+bool Writer::calculateParametrizedVals(std::vector<T> data, std::vector<int> ids)
 {
-    for (int i=0; i<m_nbrMotors; i++)
+    for (int i=0; i<ids.size(); i++)
     {
-        int id = m_ids[i];
+        int idx = getIndex(m_ids, ids[i]);
+
+        if (idx == -1) {
+            std::cout << "[KMR_dxlP1] Error! The motor " << ids[i] << " is not handled by this writer" << std::endl;
+            return 0;
+        }
+
         T current_data = data[i];
 
         // Transform data into its parametrized form and write it into the parametrized data matrix
-        T data = current_data + m_offsets[i];  // Go to the same reference as Dynamixel's SDK
+        T data = current_data + m_offsets[idx];  // Go to the same reference as Dynamixel's SDK
 
         int32_t parameter = 0;
-        int32_t absParam = (int32_t) abs((float)data/m_units[i]);
+        int32_t absParam = (int32_t) abs((float)data/m_units[idx]);
 
         if (data >= 0)
             parameter = absParam;
         else
             parameter = (~absParam) + 1;  // 2's complement for negative values
 
-        populateDataParam(parameter, i); 
+        populateDataParam(parameter, idx); 
 
         if (m_field == ControlTableItem::GOAL_POSITION)
-            multiturnUpdate(id, (float)current_data);
+            multiturnUpdate(ids[i], (float)current_data);
     }
+
+    return 1;
 }
+
+template <typename T>
+bool Writer::send(std::vector<T> data, std::vector<int> ids)
+{
+    if (calculateParametrizedVals(data, ids)) {
+        bool success = syncWrite(ids);
+        return success;
+    }
+    else
+        return 0;
+}
+
+template <typename T>
+bool Writer::send(std::vector<T> data)
+{
+    if (calculateParametrizedVals(data, m_ids)) {
+        bool success = syncWrite(m_ids);
+        return success;
+    }
+    else
+        return 0;
+}
+
+template <typename T>
+bool Writer::send(T data, int id)
+{
+    std::vector<T> datas = {data};
+    std::vector<int> ids = {id};
+
+    return(send(datas, ids));
+}
+
 
 }

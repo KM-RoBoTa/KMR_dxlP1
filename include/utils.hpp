@@ -17,6 +17,9 @@
 #include <iostream>
 #include <unistd.h> // Provides the usleep function
 
+namespace KMR::dxlP1
+{
+
 // Trigonometry
 float deg2rad(float deg);
 float rad2deg(float rad);
@@ -64,4 +67,6 @@ int getIndex(std::vector<T> v, T k)
     if (it != v.end())  
         index = it - v.begin(); 
     return index;    
+}
+
 }

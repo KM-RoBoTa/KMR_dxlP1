@@ -22,10 +22,22 @@ namespace KMR::dxlP1
 {
 
 /**
- * @brief   Constructor for Hal
+ * @brief   Initialize the Hal - called by MotorHandler in its cstr
+ * @param   ids List of IDs of all the motors in the robot
+ * @param   nbrMotors Number of motors in the robot
+ * @param   models List of model numbers of each motor, gotten during the motors ping
  */
-Hal::Hal()
+Hal::Hal(vector<int> ids, int nbrMotors, vector<int> models)
 {
+    m_nbrMotors = nbrMotors;
+    m_ids = ids;
+    m_models =  models;
+
+    for (int i=0; i<m_nbrMotors; i++) {
+        Motor motor(m_ids[i], m_models[i]);
+        m_motorsList.push_back(motor);
+    }
+
     AX_12A = new AX_12A_P1();
     MX_64 = new MX_64_P1();
 }
@@ -41,24 +53,6 @@ Hal::~Hal()
     // Protection against accidental double freeing
     AX_12A = nullptr;
     MX_64 = nullptr;
-}
-
-/**
- * @brief   Initialize the Hal - called by MotorHandler in its cstr
- * @param   ids List of IDs of all the motors in the robot
- * @param   nbrMotors Number of motors in the robot
- * @param   models List of model numbers of each motor, gotten during the motors ping
- */
-void Hal::init(vector<int> ids, int nbrMotors, vector<int> models)
-{
-    m_nbrMotors = nbrMotors;
-    m_ids = ids;
-    m_models =  models;
-
-    for (int i=0; i<m_nbrMotors; i++) {
-        Motor motor(m_ids[i], m_models[i]);
-        m_motorsList.push_back(motor);
-    }
 }
 
 
