@@ -95,56 +95,104 @@ void Reader::checkBulkAvailability()
 
 bool Reader::read(std::vector<float>& fbckValues)
 {
+    bool success = 0;
+
     if (m_bulkAvailable == 0)
-        basicRead(m_ids);
+        success = basicRead(m_ids);
     else {
-        bulkRead(m_bulkReadIds);
-        basicRead(m_basicReadIds);
+        bool successBulk = 1, successBasic = 1;
+
+        successBulk = bulkRead(m_bulkReadIds);
+        if (m_basicReadIds.size() > 0)
+            successBasic = basicRead(m_basicReadIds);
+
+        if (successBasic && successBulk)
+            success = 1;
+        else
+            success = 0;
     }
 
     fbckValues = m_fbckValues;
 
-    return 1;
+    return success;
 }
 
 bool Reader::read(int id, float& fbckValue)
 {
     vector<int> ids = {id};
-    basicRead(ids);
+    bool success = basicRead(ids);
 
     int idx = getIndex(m_ids, id);
     fbckValue = m_fbckValues[idx];
 
-    return 1;
+    return success;
 }
 
 
 bool Reader::read(std::vector<int> ids, std::vector<float>& fbckValues)
 {
-    cout << "TODO" << endl;
+    // Check if the provided ids allow using bulk, basic, or both
+    bool split = 0;
+    vector<int> tmpBulkReadIds, tmpBasicReadIds;
 
-    /*if(m_bulkAvailable == 0)
-        // TODO
-        cout << "TODO: directly use the normal read" << endl;
+    if (m_bulkAvailable == 0)
+        split = 0;
+    else {
+        for (int i=0; i<ids.size(); i++) {
+            int idx = getIndex(m_bulkReadIds, ids[i]);
+            if (idx != -1)
+                tmpBulkReadIds.push_back(ids[i]);
+            else
+                tmpBasicReadIds.push_back(ids[i]);
+        }
 
+        if (tmpBulkReadIds.size() < 2)
+            split = 0;
+        else
+            split = 1;
+    }
 
+    // Read the values from the motors
+    bool success = 1;
+    if (!split)
+        success = basicRead(ids);
+    else {
+        bool successBulk = bulkRead(tmpBulkReadIds);
+
+        bool successBasic = 1;
+        if (tmpBasicReadIds.size() > 0)
+            successBasic = basicRead(tmpBasicReadIds);
+
+        if (successBulk && successBasic)
+            success = 1;
+        else 
+            success = 0;
+    }
+
+    // Fill the output vector
+    vector<float> fbckVec(ids.size(), 0);
     for (int i=0; i<ids.size(); i++) {
         int idx = getIndex(m_ids, ids[i]);
-        int bulkRead = m_hal->bulkReadFromModel();
-    }*/
+        fbckVec[i] = m_fbckValues[idx];
+    }
 
-   return 1;
+    fbckValues = fbckVec;
+
+   return success;
 }
 
 
-void Reader::basicRead(std::vector<int> ids)
+bool Reader::basicRead(std::vector<int> ids)
 {
-    if (ids.size() == 0)
-        return;
+    if (ids.size() == 0) {
+        cout << "Error! Basic read got sent an empty id vector" << endl;
+        return 0; 
+    }
 
     int dxl_comm_result = COMM_TX_FAIL;             // Communication result
     uint8_t dxl_error = 0;                          // Dynamixel error
     uint32_t paramOutput32;
+    bool success = 1;
 
     for (int i=0; i<ids.size(); i++) {
 
@@ -186,29 +234,35 @@ void Reader::basicRead(std::vector<int> ids)
         // Check the success of the read
         if (dxl_comm_result != COMM_SUCCESS) {
             cout << packetHandler_->getTxRxResult(dxl_comm_result) << endl;
-            // TODO: return an error?
+            success = 0;
         }
+        else {
+            // For some reason, the error "Input voltage error" is constantly reported, 
+            // despite the readings being successful.
+            // The next part is thus uncommented, hopefully only temporarily until 
+            // we find where the issue lies
 
-        // For some reason, the error "Input voltage error" is constantly reported, 
-        // despite the readings being successful.
-        // The next part is thus uncommented, hopefully only temporarily until 
-        // we find where the issue lies
+            //else if (dxl_error != 0) {
+            //    cout << packetHandler_->getRxPacketError(dxl_error) << endl;
+            //    return 0;
+            //}
 
-        //else if (dxl_error != 0) {
-        //    cout << packetHandler_->getRxPacketError(dxl_error) << endl;
-        //    return 0;
-        //}
-
-        // Transform the parametrized value into SI and save it to the matrix
-        fillOutputMatrix(paramOutput32, ids[i]);
+            // Transform the parametrized value into SI and save it to the matrix
+            fillOutputMatrix(paramOutput32, ids[i]);
+        }
     }
+
+    return success;
 }
 
-void Reader::bulkRead(std::vector<int> ids)
+bool Reader::bulkRead(std::vector<int> ids)
 {
-    if (ids.size() == 0)
-        return;
+    if (ids.size() == 0) {
+        cout << "Error! Bulk read got sent an empty id vector" << endl;
+        return 0; 
+    }
 
+    bool success = 1;
     clearParam();
 
     // Add the input motors to the reading list
@@ -216,18 +270,18 @@ void Reader::bulkRead(std::vector<int> ids)
         bool dxl_addparam_result = addParam(ids[i]);
         if (dxl_addparam_result != true) {
             cout << "Adding parameters failed for ID = " << ids[i] << endl;
-            //return false;
+            success = 0;
         }
     }
 
-    // Read the motors' sensors
+    // Read the motors' feedbacks
     int dxl_comm_result = m_groupBulkReader->txRxPacket();
     if (dxl_comm_result != COMM_SUCCESS){
         cout << packetHandler_->getTxRxResult(dxl_comm_result) << endl;
-        //return false;
+        success = 0;
     }
 
-    // new
+    // Transform those feedbacks into SI
     for (int i=0; i<ids.size(); i++) {
         if (m_groupBulkReader->isAvailable(ids[i], m_data_address, m_data_byte_size)) {
             uint32_t paramData = m_groupBulkReader->getData(ids[i], m_data_address, m_data_byte_size);
@@ -235,9 +289,11 @@ void Reader::bulkRead(std::vector<int> ids)
         }
         else {
             cout << "Group bulk read data is not available" << endl;
-            // todo
+            success = 0;
         }
     }
+
+    return success;
 }
 
 

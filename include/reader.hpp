@@ -45,8 +45,8 @@ private:
 
     // new 
     void checkBulkAvailability();
-    void basicRead(std::vector<int> ids);
-    void bulkRead(std::vector<int> ids);
+    bool basicRead(std::vector<int> ids);
+    bool bulkRead(std::vector<int> ids);
     void fillOutputMatrix(uint32_t paramData , int id);
 
 

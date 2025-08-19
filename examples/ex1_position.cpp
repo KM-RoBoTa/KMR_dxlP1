@@ -68,7 +68,7 @@ int main()
     vector<float> goalPositions(nbrMotors, 0);
     vector<float> fbckPositions(nbrMotors, 0);
 
-    /*cout << endl << endl << " ---------- Showcase of ignored commands when above set limits ---------" << endl;
+    cout << endl << endl << " ---------- Showcase of ignored commands when above set limits ---------" << endl;
     sleep(3);
     robot.setPositions(goalPositions);
     sleep(1);
@@ -101,7 +101,7 @@ int main()
     robot.setPositions(goalPositions);
     cout << "Going to 0" << endl;
     sleep(2);
-*/
+
 
     cout << endl << endl << " ---------- Smooth position command, also with set limits ---------" << endl;
     sleep(3);
@@ -145,7 +145,7 @@ int main()
                 forward = true;
             }
         }
-        angle = -M_PI/2; // DEBUG
+        
         // Increment counter and set the control loop to 5ms
         ctr++;
 
