@@ -37,6 +37,7 @@ public:
 
     float getPositionOffset(int modelNumber);
     Field getControlFieldFromModel(int modelNumber, ControlTableItem item);
+    ControlTable getControlTable(int modelNumber);
     Motor getMotorFromID(int id);
     bool bulkReadFromModel(int modelNumber);
     
@@ -57,7 +58,6 @@ private:
 
     // Get hardware information, in private scope
     Field getControlField(ControlTable motor, ControlTableItem item);
-    ControlTable getControlTable(int modelNumber);
 };
 
 }

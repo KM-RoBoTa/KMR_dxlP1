@@ -24,6 +24,8 @@ struct MX_64_P1 : ControlTable {
 	MX_64_P1 ()
     {
         bulkRead = 1;
+        jointValue = 1024;
+        multiturnValue = 4095;
 
 		// EEPROM
         modelNumber.addr = 0;

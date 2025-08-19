@@ -21,7 +21,7 @@ const int UNDEF = -1;
  * @brief       Hardware abstraction layer for Dynamixel motors
  */
 enum class ControlMode {
-    CURRENT, SPEED, POSITION, MULTITURN, HYBRID, PWM, UNDEF_CTRL
+    POSITION, MULTITURN, WHEEL, TORQUE, UNDEF
 };
 
 
@@ -78,6 +78,8 @@ struct Field {
  */
 struct ControlTable {
     bool bulkRead = 0;  // If a model technically supports bulkRead (= MX or X series)
+    int32_t jointValue = UNDEF;
+    int32_t multiturnValue = UNDEF;
 
     Field modelNumber;
     Field firmware;

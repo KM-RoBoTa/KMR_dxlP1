@@ -43,3 +43,5 @@ endif()
 # Generate example executables
 add_executable(ex1_position examples/ex1_position.cpp)
 target_link_libraries(ex1_position ${PROJECT_NAME})
+add_executable(ex_multiturn examples/ex_multiturn.cpp)
+target_link_libraries(ex_multiturn ${PROJECT_NAME})

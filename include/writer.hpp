@@ -36,6 +36,10 @@ public:
     template <typename T> bool send(std::vector<T> data);
     template <typename T> bool send(int id, T data);
 
+    bool sendParameter(std::vector<int> ids, std::vector<int32_t> parameters);
+    bool sendParameter(std::vector<int32_t> parameters);
+    bool sendParameter(int id, int32_t parameter);
+
 private:
     dynamixel::GroupSyncWrite *m_groupSyncWriter = nullptr;
     uint8_t **m_dataParam = nullptr; // Table containing all parametrized data to be sent

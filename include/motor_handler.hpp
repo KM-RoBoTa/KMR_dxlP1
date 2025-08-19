@@ -49,13 +49,13 @@ public:
     bool disableMotors();
     bool disableMotors(std::vector<int> ids);
     bool disableMotor(int id);
-    //void reboot(int id);
-    //void reboot();
+    // Note: rebooting is not implemented in protocol 1
 
     // Motor setup
-
-    //void setControlModes(std::vector<ControlMode> controlModes);  
-    //void setControlModes(ControlMode controlMode);  
+    bool setControlModes(std::vector<int> ids, std::vector<ControlMode> controlModes);  
+    bool setControlModes(std::vector<ControlMode> controlModes);  
+    bool setControlModes(ControlMode controlMode); 
+    bool setControlMode(int id, ControlMode controlMode); 
     bool setReturnDelayTime(float val); 
     bool setMinVoltage(std::vector<float> maxVoltages);   
     bool setMinVoltage(float minVoltage);   
@@ -113,6 +113,9 @@ private:
     Writer* m_torqueWriter = nullptr;
     Reader* m_positionReader = nullptr;
     Reader* m_speedReader = nullptr;
+
+    Writer* m_maxPositionWriter = nullptr; // Min & max limits are also used for mode setting
+    Writer* m_minPositionWriter = nullptr;
 
     void init_comm(const char *port_name, int baudrate, float protocol_version);
     void check_comm();

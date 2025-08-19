@@ -140,6 +140,31 @@ bool Writer::addParam(uint8_t id, uint8_t* data)
     return dxl_addparam_result;
 }
 
+// !!! Do NOT use with multiturn, it does not check the flag condition
+bool Writer::sendParameter(std::vector<int> ids, std::vector<int32_t> parameters)
+{
+    for (int i=0; i<ids.size(); i++) {
+        int idx = getIndex(m_ids, ids[i]);
+        populateDataParam(parameters[i], idx);
+    }
+
+    bool success = syncWrite(ids);
+    return success;
+}
+
+bool Writer::sendParameter(std::vector<int32_t> parameters)
+{
+    return(sendParameter(m_ids, parameters));
+}
+
+bool Writer::sendParameter(int id, int32_t parameter)
+{
+    vector<int> ids = {id};
+    vector<int32_t> parameters = {parameter};
+
+    return(sendParameter(ids, parameters));
+}
+
 /*
  *****************************************************************************
  *                            Multiturn functions

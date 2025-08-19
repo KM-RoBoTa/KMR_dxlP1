@@ -55,6 +55,9 @@ MotorHandler::MotorHandler(vector<int> ids, const char *port_name, int baudrate)
         m_torqueWriter = getNewWriter(ControlTableItem::GOAL_TORQUE, m_ids);
         m_positionReader = getNewReader(ControlTableItem::PRESENT_POSITION, m_ids);
         m_speedReader = getNewReader(ControlTableItem::PRESENT_VELOCITY, m_ids);
+
+        m_maxPositionWriter = getNewWriter(ControlTableItem::CCW_ANGLE_LIMIT, m_ids);
+        m_minPositionWriter = getNewWriter(ControlTableItem::CW_ANGLE_LIMIT, m_ids);
     }
 }
 
@@ -70,6 +73,8 @@ MotorHandler::~MotorHandler()
     deleteWriter(m_torqueWriter);
     deleteReader(m_speedReader);
     deleteReader(m_positionReader);
+    deleteWriter(m_maxPositionWriter);
+    deleteWriter(m_minPositionWriter);
 
     // Security against double freeing
     m_motorEnableWriter = nullptr;
@@ -77,6 +82,8 @@ MotorHandler::~MotorHandler()
     m_torqueWriter = nullptr;
     m_positionReader = nullptr;
     m_speedReader = nullptr;
+    m_maxPositionWriter = nullptr;
+    m_minPositionWriter = nullptr;
 
     // Delete the Hal
     delete m_hal;
@@ -261,29 +268,6 @@ bool MotorHandler::disableMotor(int id)
     return(m_motorEnableWriter->send(id, DISABLE));
 }
 
-/**
- * @brief       Reboot a specific motor
- * @note        Make sure to give the motor enough time to reboot (~100ms).
- *              After the reboot, the motor's torque is disabled
- * @param[in]   id Motor to be rebooted
- */
-/*void MotorHandler::reboot(int id)
-{
-    packetHandler_->reboot(portHandler_, id);
-}/*
-
-/**
- * @brief   Reboot all motors
- * @note    Make sure to give the motors enough time to reboot (~100ms).
- *          After the reboot, the motors' torque is disabled
- */
-/*void MotorHandler::reboot()
-{
-    for (int i=0; i<m_nbrMotors; i++)
-        packetHandler_->reboot(portHandler_, m_ids[i]);
-}*/
-
-
 /****************************************************************************
 *                     EEPROM settings writing
 ****************************************************************************/
@@ -293,66 +277,73 @@ bool MotorHandler::disableMotor(int id)
  * @note        If all motors have the same control mode, you can use the overload function
  * @param[in]   controlModes Control modes to be set to motors
  */
-/*
-void MotorHandler::setControlModes(std::vector<ControlMode> controlModes)
+bool MotorHandler::setControlModes(std::vector<int> ids, std::vector<ControlMode> controlModes)  
 {
-    using enum ControlMode;
+    vector<int32_t> vals(ids.size(), 0);
 
-    Writer writer(vector<ControlTableItem>{ControlTableItem::OPERATING_MODE}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
+    for (int i=0; i<ids.size(); i++) {
+        int idx = getIndex(m_ids, ids[i]);
+        ControlTable table = m_hal->getControlTable(m_models[idx]);
 
-    if (controlModes.size() != m_nbrMotors) {
-        cout << "Error! Not all motors have their control modes assigned. Exiting" << endl; 
-        cout << endl;
-    }
-
-    vector<int> controlModes_int(m_nbrMotors);
-    for (int i=0; i<m_nbrMotors; i++) {
         switch (controlModes[i])
         {
-        case CURRENT:
-            controlModes_int[i] = CTRL_CURRENT;
+        case ControlMode::POSITION:
+            vals[i] = table.jointValue;
             break;
-        case SPEED:
-            controlModes_int[i] = CTRL_SPEED;
+
+        case ControlMode::MULTITURN:
+            vals[i] = table.multiturnValue;
+            m_hal->setMultiturnMode(ids[i]);
             break;
-        case POSITION:
-            controlModes_int[i] = CTRL_POSITION;
-            break;
-        case MULTITURN:
-            controlModes_int[i] = CTRL_MULTITURN;
-            m_hal->setMultiturnMode(m_ids[i]);
-            break;
-        case HYBRID:
-            controlModes_int[i] = CTRL_HYBRID;
-            break;
-        case PWM:
-            controlModes_int[i] = CTRL_PWM;
-            break;
-        
+
         default:
-            cout << "Error! Trying to assign an unknown control mode. Exiting" << endl;
+            cout << "This control mode is not (yet) supported" << endl;
             exit(1);
             break;
         }
     }
 
-    writer.addDataToWrite(controlModes_int);
-    writer.syncWrite();
+    bool successMax = m_maxPositionWriter->sendParameter(ids, vals);
+    bool successMin = m_minPositionWriter->sendParameter(ids, vals);
+
+    bool success = 0;
+    if (successMin && successMax)
+        success = 1;
+    
+    return success;
 }
-*/
 
 /**
  * @brief       Set the same control mode to all motors
  * @param[in]   controlMode Control mode to be set to all motors
  */
-/*
-void MotorHandler::setControlModes(ControlMode controlMode)
+bool MotorHandler::setControlModes(std::vector<ControlMode> controlModes)
+{
+    if (controlModes.size() != m_nbrMotors) {
+        cout << "Error! The size of control modes is not equal to the number of motors" << endl;
+        exit(1);
+    }
+
+    return(setControlModes(m_ids, controlModes));
+}
+
+bool MotorHandler::setControlMode(int id, ControlMode controlMode)
+{
+    vector<ControlMode> controlModes = {controlMode};
+    vector<int> ids = {id};
+
+    return(setControlModes(ids, controlModes));
+}
+
+/**
+ * @brief       Set the same control mode to all motors
+ * @param[in]   controlMode Control mode to be set to all motors
+ */
+bool MotorHandler::setControlModes(ControlMode controlMode)
 {
     vector<ControlMode> controlModes(m_nbrMotors, controlMode);
-    setControlModes(controlModes);
+    return(setControlModes(m_ids, controlModes));
 }
-*/
 
 
 /**
@@ -430,11 +421,8 @@ bool MotorHandler::setMinPosition(std::vector<float> minPositions)
         cout << "Error! The min. position values do not coincide with the number of motors" << endl;
         exit(1);
     }
-    
-    Writer writer(ControlTableItem::CW_ANGLE_LIMIT, m_ids, m_models,
-                    portHandler_, packetHandler_, m_hal);
 
-    return(writer.send(minPositions));
+    return(m_minPositionWriter->send(minPositions));
 }
 
 /**
@@ -458,11 +446,8 @@ bool MotorHandler::setMaxPosition(std::vector<float> maxPositions)
         cout << "Error! The max. position values do not coincide with the number of motors" << endl;
         exit(1);
     }
-    
-    Writer writer(ControlTableItem::CCW_ANGLE_LIMIT, m_ids, m_models,
-                    portHandler_, packetHandler_, m_hal);
 
-    return(writer.send(maxPositions));
+    return(m_maxPositionWriter->send(maxPositions));
 }
 
 /**
@@ -530,13 +515,7 @@ bool MotorHandler::setTorque(int id, float torque)
  */
 bool MotorHandler::getPositions(std::vector<float>& positions)
 {
-    // debug
-    timespec start = time_s();
-    bool success = m_positionReader->read(positions);
-    timespec end = time_s();
-    double elapsed = get_delta_us(end, start);
-    cout << "elapsed: " << elapsed << " us " << endl;
-    return success;
+    return (m_positionReader->read(positions));
 }
 
 bool MotorHandler::getPositions(std::vector<int> ids, std::vector<float>& positions)
@@ -579,27 +558,36 @@ bool MotorHandler::getSpeed(int id, float speed)
  * @note        Make sure the motors had enough time to execute the goal position command before 
  *              calling this function. Failure to do so results in undefined behavior.
  */
-/*
 void MotorHandler::resetMultiturnMotors()
 {
     bool needSleep = 0;
+    vector<int> ids_toReset;
+
     for(int i=0; i<m_nbrMotors; i++) {
         int id = m_ids[i];
         Motor motor = m_hal->getMotorFromID(id);
 
         if (motor.toReset) {
             needSleep = 1;
-            reboot(id);
+            ids_toReset.push_back(id);
             m_hal->updateResetStatus(id, 0);
         }
     }
 
     if (needSleep) {
-        usleep(100*1000);  // Wait for the reboot to finish
+        disableMotors(ids_toReset);
+
+        bool successJoint = setControlModes(ids_toReset, vector<ControlMode>(ids_toReset.size(), ControlMode::POSITION));
+        usleep(1*1000);  // Wait for the reboot to finish
+        enableMotors(ids_toReset);
+        usleep(1*1000); // Give time for the enable
+        disableMotors(ids_toReset);
+
+        bool successMulti = setControlModes(ids_toReset, vector<ControlMode>(ids_toReset.size(), ControlMode::MULTITURN));
+        usleep(1*1000);  // Wait for the reboot to finish
         enableMotors();
-        usleep(5*1000); // Allow the enable
+        usleep(1*1000); // Give time for the enable
     }
 }
-*/
 
 }
