@@ -30,9 +30,6 @@ namespace KMR::dxlP1
  */
 class MotorHandler {
 public:
-    std::vector<int> m_ids;     // List of all motor IDs
-    int m_nbrMotors;            // Number of motors
-    std::vector<int> m_models;  // Models of the motors
 
     MotorHandler(std::vector<int> ids, const char *port_name, int baudrate);
     ~MotorHandler();
@@ -46,8 +43,12 @@ public:
     
     // Enable/disable motor torque and rebooting
 
-    void enableMotors();
-    void disableMotors();
+    bool enableMotors();
+    bool enableMotors(std::vector<int> ids);
+    bool enableMotor(int id);
+    bool disableMotors();
+    bool disableMotors(std::vector<int> ids);
+    bool disableMotor(int id);
     //void reboot(int id);
     //void reboot();
 
@@ -55,45 +56,51 @@ public:
 
     //void setControlModes(std::vector<ControlMode> controlModes);  
     //void setControlModes(ControlMode controlMode);  
-    //void setReturnDelayTime(float val); 
-    //void setMinVoltage(std::vector<float> maxVoltages);   
-    //void setMinVoltage(float minVoltage);   
-    //void setMaxVoltage(std::vector<float> maxVoltages);  
-    //void setMaxVoltage(float maxVoltage);  
+    bool setReturnDelayTime(float val); 
+    bool setMinVoltage(std::vector<float> maxVoltages);   
+    bool setMinVoltage(float minVoltage);   
+    bool setMaxVoltage(std::vector<float> maxVoltages);  
+    bool setMaxVoltage(float maxVoltage);  
 
 
     // Set limits for different operating modes
 
-    //void setMinPosition(std::vector<float> minPositions);
-    //void setMinPosition(float minPosition);
-    //void setMaxPosition(std::vector<float> maxPositions);
-    //void setMaxPosition(float maxPosition);
-    //void setMaxSpeed(std::vector<float> maxSpeeds);
-    //void setMaxSpeed(float maxSpeed);
-    //void setMaxCurrent(std::vector<float> maxCurrents);
-    //void setMaxCurrent(float maxCurrent);
-    //void setMaxPWM(std::vector<float> maxPWMs);
-    //void setMaxPWM(float maxPWM);
+    bool setMinPosition(std::vector<float> minPositions);
+    bool setMinPosition(float minPosition);
+    bool setMaxPosition(std::vector<float> maxPositions);
+    bool setMaxPosition(float maxPosition);
 
-    // Control and feedback commands
+    // Control commands
 
-    void setPositions(std::vector<float> positions);
+    bool setPositions(std::vector<float> positions);
+    bool setPositions(std::vector<int> ids, std::vector<float> positions);
+    bool setPosition(int id, float position);
+
+
+    bool setTorques(std::vector<float> torques);
+    bool setTorques(std::vector<int> ids, std::vector<float> torques);
+    bool setTorque(int id, float torque);
+
+
+    // Feedback functions
+
     bool getPositions(std::vector<float>& positions);
-    //void setSpeeds(std::vector<float> speeds);
-    //bool getSpeeds(std::vector<float>& speeds);
-    //void setCurrents(std::vector<float> currents);
-    //bool getCurrents(std::vector<float>& currents);
-    //void setPWMs(std::vector<float> pwms);
-    //bool getPWMs(std::vector<float>& pwms);
+    bool getPositions(std::vector<int> ids, std::vector<float>& positions);
+    bool getPosition(int id, float position);
 
-    //void setHybrid(std::vector<float> positions, std::vector<float> currents);
-    //bool getHybrid(std::vector<float>& positions, std::vector<float>& currents);
+    bool getSpeeds(std::vector<float>& speeds);
+    bool getSpeeds(std::vector<int> ids, std::vector<float>& speeds);
+    bool getSpeed(int id, float speed);
 
     // Multiturn
 
     void resetMultiturnMotors();
 
 private:
+    std::vector<int> m_ids;     // List of all motor IDs
+    int m_nbrMotors;            // Number of motors
+    std::vector<int> m_models;  // Models of the motors
+
     dynamixel::PortHandler   *portHandler_ = nullptr;
     dynamixel::PacketHandler *packetHandler_ = nullptr;
     Hal* m_hal = nullptr;
@@ -103,13 +110,9 @@ private:
     // Base controls
     
     Writer* m_positionWriter = nullptr;
-    Writer* m_speedWriter = nullptr;
-    Writer* m_currentWriter = nullptr;
-    Writer* m_PWMWriter = nullptr;
+    Writer* m_torqueWriter = nullptr;
     Reader* m_positionReader = nullptr;
     Reader* m_speedReader = nullptr;
-    Reader* m_currentReader = nullptr;
-    Reader* m_PWMReader = nullptr;
 
     void init_comm(const char *port_name, int baudrate, float protocol_version);
     void check_comm();

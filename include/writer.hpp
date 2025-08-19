@@ -32,9 +32,9 @@ public:
             Hal* hal);
     ~Writer();
 
-    template <typename T> bool send(std::vector<T> data, std::vector<int> ids);
+    template <typename T> bool send(std::vector<int> ids, std::vector<T> data);
     template <typename T> bool send(std::vector<T> data);
-    template <typename T> bool send(T data, int id);
+    template <typename T> bool send(int id, T data);
 
 private:
     dynamixel::GroupSyncWrite *m_groupSyncWriter = nullptr;
@@ -97,7 +97,7 @@ bool Writer::calculateParametrizedVals(std::vector<T> data, std::vector<int> ids
 }
 
 template <typename T>
-bool Writer::send(std::vector<T> data, std::vector<int> ids)
+bool Writer::send(std::vector<int> ids, std::vector<T> data)
 {
     if (calculateParametrizedVals(data, ids)) {
         bool success = syncWrite(ids);
@@ -119,13 +119,12 @@ bool Writer::send(std::vector<T> data)
 }
 
 template <typename T>
-bool Writer::send(T data, int id)
+bool Writer::send(int id, T data)
 {
     std::vector<T> datas = {data};
     std::vector<int> ids = {id};
 
-    return(send(datas, ids));
+    return(send(ids, datas));
 }
-
 
 }

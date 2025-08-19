@@ -43,16 +43,13 @@ private:
 
 	std::vector<float> m_fbckValues;
 
-    // new 
     void checkBulkAvailability();
     bool basicRead(std::vector<int> ids);
     bool bulkRead(std::vector<int> ids);
     void fillOutputMatrix(uint32_t paramData , int id);
 
-
 	void clearParam();
 	bool addParam(uint8_t id);
-
 	bool canBeNegative(ControlTableItem field);
 };
 

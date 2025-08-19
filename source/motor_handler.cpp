@@ -48,19 +48,13 @@ MotorHandler::MotorHandler(vector<int> ids, const char *port_name, int baudrate)
 
     // 2 integrated handlers: motor enabling and mode setter
     {
-        //using enum ControlTableItem;
-
         m_motorEnableWriter = getNewWriter(ControlTableItem::TORQUE_ENABLE, m_ids);
 
         // Integrated base command handlers
         m_positionWriter = getNewWriter(ControlTableItem::GOAL_POSITION, m_ids);
-        //m_speedWriter = getNewWriter(vector<ControlTableItem>{GOAL_VELOCITY}, m_ids);
-        //m_currentWriter = getNewWriter(vector<ControlTableItem>{GOAL_CURRENT}, m_ids);
-        //m_PWMWriter = getNewWriter(vector<ControlTableItem>{GOAL_PWM}, m_ids);
+        m_torqueWriter = getNewWriter(ControlTableItem::GOAL_TORQUE, m_ids);
         m_positionReader = getNewReader(ControlTableItem::PRESENT_POSITION, m_ids);
-        //m_speedReader = getNewReader(vector<ControlTableItem>{PRESENT_VELOCITY}, m_ids);
-        //m_currentReader = getNewReader(vector<ControlTableItem>{PRESENT_CURRENT}, m_ids);
-        //m_PWMReader = getNewReader(vector<ControlTableItem>{PRESENT_PWM}, m_ids);
+        m_speedReader = getNewReader(ControlTableItem::PRESENT_VELOCITY, m_ids);
     }
 }
 
@@ -73,24 +67,16 @@ MotorHandler::~MotorHandler()
     // Delete handlers created on heap
     deleteWriter(m_motorEnableWriter);
     deleteWriter(m_positionWriter); 
-    deleteWriter(m_speedWriter);
-    deleteWriter(m_currentWriter);
-    deleteWriter(m_PWMWriter);
+    deleteWriter(m_torqueWriter);
     deleteReader(m_speedReader);
     deleteReader(m_positionReader);
-    deleteReader(m_currentReader);
-    deleteReader(m_PWMReader);
 
     // Security against double freeing
     m_motorEnableWriter = nullptr;
     m_positionWriter = nullptr;
-    m_speedWriter = nullptr;
-    m_currentWriter = nullptr;
-    m_PWMWriter = nullptr;
+    m_torqueWriter = nullptr;
     m_positionReader = nullptr;
     m_speedReader = nullptr;
-    m_currentReader = nullptr;
-    m_PWMReader = nullptr;
 
     // Delete the Hal
     delete m_hal;
@@ -236,17 +222,43 @@ void MotorHandler::deleteReader(Reader* reader)
 /**
  * @brief   Enable all the motors
  */
-void MotorHandler::enableMotors()
+bool MotorHandler::enableMotors()
 {
-    m_motorEnableWriter->send(vector<int>{ENABLE});
+    vector<int> vec(m_nbrMotors, ENABLE);
+    return(m_motorEnableWriter->send(vec) );
 }
 
-/**
- * @brief   Disable all the motors
- */
-void MotorHandler::disableMotors()
+bool MotorHandler::enableMotors(std::vector<int> ids)
 {
-    m_motorEnableWriter->send(vector<int>{DISABLE});
+    vector<int> vec(ids.size(), ENABLE);
+    return(m_motorEnableWriter->send(ids, vec));
+}
+
+
+bool MotorHandler::enableMotor(int id)
+{
+    return(m_motorEnableWriter->send(id, ENABLE));
+}
+
+
+/**
+ * @brief   disable all the motors
+ */
+bool MotorHandler::disableMotors()
+{
+    vector<int> vec(m_nbrMotors, DISABLE);
+    return(m_motorEnableWriter->send(vec) );
+}
+
+bool MotorHandler::disableMotors(std::vector<int> ids)
+{
+    vector<int> vec(ids.size(), DISABLE);
+    return(m_motorEnableWriter->send(ids, vec));
+}
+
+bool MotorHandler::disableMotor(int id)
+{
+    return(m_motorEnableWriter->send(id, DISABLE));
 }
 
 /**
@@ -347,71 +359,61 @@ void MotorHandler::setControlModes(ControlMode controlMode)
  * @brief       Set the return delay to all motors
  * @param[in]   val Return delay time [s]
  */
-/*
-void MotorHandler::setReturnDelayTime(float val)
+
+bool MotorHandler::setReturnDelayTime(float val)
 {
-    Writer writer(vector<ControlTableItem>{ControlTableItem::RETURN_DELAY}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
+    Writer writer(ControlTableItem::RETURN_DELAY, m_ids, m_models,
+                    portHandler_, packetHandler_, m_hal);
 
     vector<float> vals(m_nbrMotors, val);
-    writer.addDataToWrite(vals);
-    writer.syncWrite();
+    return(writer.send(vals));
 }
-*/
+
 
 /**
  * @brief       Set the minimum voltages to all motors
  * @param[in]   minVoltages Min. allowed voltages in motors [V]
- */      
-/*                           
-void MotorHandler::setMinVoltage(std::vector<float> minVoltages)
+ */                                
+bool MotorHandler::setMinVoltage(std::vector<float> minVoltages)
 {
-    Writer writer(vector<ControlTableItem>{ControlTableItem::MIN_VOLTAGE_LIMIT}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
+    Writer writer(ControlTableItem::MIN_VOLTAGE_LIMIT, m_ids, m_models,
+                    portHandler_, packetHandler_, m_hal);
 
-    writer.addDataToWrite(minVoltages);
-    writer.syncWrite();
+    return(writer.send(minVoltages));
 }
-*/
 
 /**
  * @brief       Set the same minimum voltage to all motors
  * @param[in]   minVoltage Min. allowed voltage in motors [V]
- */  
-/*                               
-void MotorHandler::setMinVoltage(float minVoltage)
+ */                             
+bool MotorHandler::setMinVoltage(float minVoltage)
 {
     vector<float> minVoltages(m_nbrMotors, minVoltage);
-    setMinVoltage(minVoltages);
+    return(setMinVoltage(minVoltages));
 }
-*/
 
 /**
  * @brief       Set the maximum voltage to all motors
  * @param[in]   maxVoltages Max. allowed voltages in motors [V]
- */   
-/*                              
-void MotorHandler::setMaxVoltage(std::vector<float> maxVoltages)
+ */                                 
+bool MotorHandler::setMaxVoltage(std::vector<float> maxVoltages)
 {
-    Writer writer(vector<ControlTableItem>{ControlTableItem::MAX_VOLTAGE_LIMIT}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
+    Writer writer(ControlTableItem::MAX_VOLTAGE_LIMIT, m_ids, m_models,
+                    portHandler_, packetHandler_, m_hal);
 
-    writer.addDataToWrite(maxVoltages);
-    writer.syncWrite();
+    return(writer.send(maxVoltages));
 }
-*/
 
 /**
  * @brief       Set the same maximum voltage to all motors
  * @param[in]   maxVoltage Max. allowed voltage in motors [V]
- */
-/*                              
-void MotorHandler::setMaxVoltage(float maxVoltage)
+ */                              
+bool MotorHandler::setMaxVoltage(float maxVoltage)
 {
     vector<float> maxVoltages(m_nbrMotors, maxVoltage);
-    setMaxVoltage(maxVoltages);
+    return(setMaxVoltage(maxVoltages));
 }
-*/
+
 
 /****************************************************************************
 *                  Setting limits in different operating modes
@@ -421,197 +423,105 @@ void MotorHandler::setMaxVoltage(float maxVoltage)
  * @brief       Set the minimum position to all motors
  * @note        If all motors have the same min. position, you can use the overload
  * @param[in]   minPositions Min. positions for motors [rad]
- */  
-/*                               
-void MotorHandler::setMinPosition(std::vector<float> minPositions)
+ */                                 
+bool MotorHandler::setMinPosition(std::vector<float> minPositions)
 {
     if (minPositions.size() != m_nbrMotors) {
         cout << "Error! The min. position values do not coincide with the number of motors" << endl;
         exit(1);
     }
     
-    Writer writer(vector<ControlTableItem>{ControlTableItem::MIN_POSITION_LIMIT}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
+    Writer writer(ControlTableItem::CW_ANGLE_LIMIT, m_ids, m_models,
+                    portHandler_, packetHandler_, m_hal);
 
-    writer.addDataToWrite(minPositions);
-    writer.syncWrite();
+    return(writer.send(minPositions));
 }
-*/
 
 /**
  * @brief       Set the same minimum position to all motors
  * @param[in]   minPosition Min. position for all motors [rad]
  */   
-/*
-void MotorHandler::setMinPosition(float minPosition)
+bool MotorHandler::setMinPosition(float minPosition)
 {
     vector<float> minPositions(m_nbrMotors, minPosition);
-    setMinPosition(minPositions);
+    return(setMinPosition(minPositions));
 }
-*/
 
 /**
  * @brief       Set the maximum position to all motors
  * @note        If all motors have the same max. position, you can use the overload
  * @param[in]   maxPositions Max. positions for motors [rad]
- */   
-/*                              
-void MotorHandler::setMaxPosition(std::vector<float> maxPositions)
+ */                                
+bool MotorHandler::setMaxPosition(std::vector<float> maxPositions)
 {
     if (maxPositions.size() != m_nbrMotors) {
         cout << "Error! The max. position values do not coincide with the number of motors" << endl;
         exit(1);
     }
+    
+    Writer writer(ControlTableItem::CCW_ANGLE_LIMIT, m_ids, m_models,
+                    portHandler_, packetHandler_, m_hal);
 
-    Writer writer(vector<ControlTableItem>{ControlTableItem::MAX_POSITION_LIMIT}, m_ids, m_models,
-                                                portHandler_, packetHandler_, m_hal, 0);
-
-    writer.addDataToWrite(maxPositions);
-    writer.syncWrite();
+    return(writer.send(maxPositions));
 }
-*/
 
 /**
- * @brief       Set the same maximum position to all motors
- * @param[in]   maxPosition Max. position for all motors [rad]
- */  
-/* 
-void MotorHandler::setMaxPosition(float maxPosition)
+ * @brief       Set the same minimum position to all motors
+ * @param[in]   maxPosition Min. position for all motors [rad]
+ */   
+bool MotorHandler::setMaxPosition(float maxPosition)
 {
     vector<float> maxPositions(m_nbrMotors, maxPosition);
-    setMaxPosition(maxPositions);
+    return(setMaxPosition(maxPositions));
 }
-*/
-
-/**
- * @brief       Set the maximum speed (absolute value) to all motors
- * @note        If all motors have the same max. speed, you can use the overload
- * @param[in]   maxSpeeds Max. absolute speeds for all motors [rad/s]
- */  
-/*      
-void MotorHandler::setMaxSpeed(std::vector<float> maxSpeeds)
-{
-    if (maxSpeeds.size() != m_nbrMotors) {
-        cout << "Error! The max. speed values do not coincide with the number of motors" << endl;
-        exit(1);
-    }
-    for (int i=0; i<m_nbrMotors; i++) {
-        if (maxSpeeds[i] < 0) {
-            cout << "Error! Max speed limit set as negative. Exiting" << endl;
-            exit(1);
-        }
-    }
-
-    Writer writer(vector<ControlTableItem>{ControlTableItem::VELOCITY_LIMIT}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
-
-    writer.addDataToWrite(maxSpeeds);
-    writer.syncWrite();
-}
-*/
-
-/**
- * @brief       Set the same maximum speed (absolute value) to all motors
- * @param[in]   maxSpeed Max. absolute speed for all motors [rad/s]
- */   
-/*
-void MotorHandler::setMaxSpeed(float maxSpeed)
-{
-    vector<float> maxSpeeds(m_nbrMotors, maxSpeed);
-    setMaxSpeed(maxSpeeds);
-}
-*/
-
-/**
- * @brief       Set the maximum current (absolute value) to all motors
- * @note        If all motors have the same max. current, you can use the overload
- * @param[in]   maxCurrents Max. absolute currents for all motors [A]
- */   
-/*  
-void MotorHandler::setMaxCurrent(std::vector<float> maxCurrents)
-{
-    if (maxCurrents.size() != m_nbrMotors) {
-        cout << "Error! The max. current values do not coincide with the number of motors" << endl;
-        exit(1);
-    }
-    for (int i=0; i<m_nbrMotors; i++) {
-        if (maxCurrents[i] < 0) {
-            cout << "Error! Max current limit set as negative. Exiting" << endl;
-            exit(1);
-        }
-    }
-
-    Writer writer(vector<ControlTableItem>{ControlTableItem::CURRENT_LIMIT}, m_ids, m_models,
-                                            portHandler_, packetHandler_, m_hal, 0);
-
-    writer.addDataToWrite(maxCurrents);
-    writer.syncWrite();    
-}
-*/
-
-/**
- * @brief       Set the same maximum current (absolute value) to all motors
- * @param[in]   maxCurrent Max. absolute current for all motors [A]
- */   
-/*
-void MotorHandler::setMaxCurrent(float maxCurrent)
-{
-    vector<float> maxCurrents(m_nbrMotors, maxCurrent);
-    setMaxCurrent(maxCurrents);
-}
-*/
-
-/**
- * @brief       Set the maximum PWM (absolute value) to all motors
- * @note        If all motors have the same max. PWM, you can use the overload
- * @param[in]   maxPWMs Max. absolute PWMs for all motors [%]
- */   
-/*
-void MotorHandler::setMaxPWM(std::vector<float> maxPWMs)
-{
-    if (maxPWMs.size() != m_nbrMotors) {
-        cout << "Error! The max. PWM values do not coincide with the number of motors" << endl;
-        exit(1);
-    }
-    for (int i=0; i<m_nbrMotors; i++) {
-        if (maxPWMs[i] < 0) {
-            cout << "Error! Max PWM limit set as negative. Exiting" << endl;
-            exit(1);
-        }
-    }
-
-    Writer writer(vector<ControlTableItem>{ControlTableItem::PWM_LIMIT}, m_ids, m_models,
-                                        portHandler_, packetHandler_, m_hal, 0);
-
-    writer.addDataToWrite(maxPWMs);
-    writer.syncWrite();   
-}
-*/
-
-/**
- * @brief       Set the same maximum PWM (absolute value) to all motors
- * @param[in]   maxPWM Max. absolute PWM for all motors [%]
- */ 
-/*  
-void MotorHandler::setMaxPWM(float maxPWM)
-{
-    vector<float> maxPWMs(m_nbrMotors, maxPWM);
-    setMaxPWM(maxPWMs);
-}
-*/
 
 /******************************************************************************
-/ *                           Control and feedback commands
+/ *                           Control commands
 / ****************************************************************************/
 
 /**
  * @brief       Set the positions of all motors
  * @param[in]   positions Goal positions of all motors [rad]
  */ 
-void MotorHandler::setPositions(std::vector<float> positions)
+bool MotorHandler::setPositions(std::vector<float> positions)
 {
-    m_positionWriter->send(positions);
+    return(m_positionWriter->send(positions));
 }
+
+bool MotorHandler::setPositions(std::vector<int> ids, std::vector<float> positions)
+{
+    return(m_positionWriter->send(ids, positions));
+}
+
+bool MotorHandler::setPosition(int id, float position)
+{
+    return(m_positionWriter->send(id, position));
+}
+
+/**
+ * @brief       Set the currents of all motors
+ * @param[in]   currents Goal currents of all motors [A]
+ */ 
+
+bool MotorHandler::setTorques(std::vector<float> torques)
+{
+    return(m_torqueWriter->send(torques));
+}
+
+bool MotorHandler::setTorques(std::vector<int> ids, std::vector<float> torques)
+{
+    return(m_torqueWriter->send(ids, torques));
+}
+
+bool MotorHandler::setTorque(int id, float torque)
+{
+    return(m_torqueWriter->send(id, torque));
+}
+
+
+/******************************************************************************
+/ *                           Feedback commands
+/ ****************************************************************************/
 
 /**
  * @brief       Get the feedback positions of all motors
@@ -620,129 +530,44 @@ void MotorHandler::setPositions(std::vector<float> positions)
  */
 bool MotorHandler::getPositions(std::vector<float>& positions)
 {
+    // debug
     timespec start = time_s();
-    m_positionReader->read(positions);
+    bool success = m_positionReader->read(positions);
     timespec end = time_s();
     double elapsed = get_delta_us(end, start);
     cout << "elapsed: " << elapsed << " us " << endl;
-    return 1;
+    return success;
 }
 
-
-/**
- * @brief       Set the speeds of all motors
- * @param[in]   speeds Goal speeds of all motors [rad/s]
- */ 
-/*
-void MotorHandler::setSpeeds(std::vector<float> speeds)
+bool MotorHandler::getPositions(std::vector<int> ids, std::vector<float>& positions)
 {
-    m_speedWriter->addDataToWrite(speeds);
-    m_speedWriter->syncWrite();
+    return (m_positionReader->read(ids, positions));
 }
-*/
+
+bool MotorHandler::getPosition(int id, float position)
+{
+    return(m_positionReader->read(id, position));
+}
 
 /**
  * @brief       Get the feedback speeds of all motors
- * @param[out]  speeds [Output] Vector to hold the feedback speeds [rad/s]
+ * @param[out]  speeds [Output] Vector to hold the feedback speeds [rad]
  * @return      1 if reading was successful, 0 otherwise
  */
-/*
 bool MotorHandler::getSpeeds(std::vector<float>& speeds)
 {
-    bool readSuccess = m_speedReader->syncRead();
-    if (readSuccess) {
-        speeds = m_speedReader->getReadingResults();
-        return true;
-    }
-    else
-        return false;
-}
-*/
-
-/**
- * @brief       Set the currents of all motors
- * @param[in]   currents Goal currents of all motors [A]
- */ 
-/*
-void MotorHandler::setCurrents(std::vector<float> currents)
-{
-    m_currentWriter->addDataToWrite(currents);
-    m_currentWriter->syncWrite();
-}
-*/
-
-/**
- * @brief       Get the feedback currents of all motors
- * @param[out]  currents [Output] Vector to hold the feedback currents [A]
- * @return      1 if reading was successful, 0 otherwise
- */
-/*
-bool MotorHandler::getCurrents(std::vector<float>& currents)
-{
-    bool readSuccess = m_currentReader->syncRead();
-    if (readSuccess) {
-        currents = m_currentReader->getReadingResults();
-        return true;
-    }
-    else 
-        return false;
-}
-*/
-
-/**
- * @brief       Set the PWMs of all motors
- * @param[in]   pwms Goal PWMs of all motors [%]
- */ 
-/*
-void MotorHandler::setPWMs(std::vector<float> pwms)
-{
-    m_PWMWriter->addDataToWrite(pwms);
-    m_PWMWriter->syncWrite();
-}
-*/
-
-/**
- * @brief       Get the feedback PWMs of all motors
- * @param[out]  pwms [Output] Vector to hold the feedback pwms [%]
- * @return      1 if reading was successful, 0 otherwise
- */
-/*
-bool MotorHandler::getPWMs(std::vector<float>& pwms)
-{
-    bool readSuccess = m_PWMReader->syncRead();
-    if (readSuccess) {
-        pwms = m_PWMReader->getReadingResults();
-        return true;
-    }
-    else 
-        return false;
-}
-*/
-
-// Hybrid command mode, to be finished
-/*
-void MotorHandler::setHybrid(std::vector<float> positions, std::vector<float> currents)
-{
-    m_positionWriter->addDataToWrite(positions);
-    m_currentWriter->addDataToWrite(currents);
-
-    m_positionWriter->syncWrite();
-    m_currentWriter->syncWrite();
+    return(m_speedReader->read(speeds));
 }
 
-bool MotorHandler::getHybrid(std::vector<float>& positions, std::vector<float>& currents)
+bool MotorHandler::getSpeeds(std::vector<int> ids, std::vector<float>& speeds)
 {
-    bool readPositionSuccess = m_positionReader->syncRead();
-    bool readCurrentSuccess = m_currentReader->syncRead();
+    return (m_speedReader->read(ids, speeds));
+}
 
-    if (readPositionSuccess && readCurrentSuccess) {
-        positions = m_positionReader->getReadingResults();
-        currents = m_currentReader->getReadingResults();
-        return true;
-    }
-    else 
-        return false;
-}*/
+bool MotorHandler::getSpeed(int id, float speed)
+{
+    return(m_speedReader->read(id, speed));
+}
 
 /*
 *****************************************************************************
