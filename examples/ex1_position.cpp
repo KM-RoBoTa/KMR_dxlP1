@@ -51,17 +51,17 @@ int main()
     robot.disableMotors();
 
     // Set the control mode
-    //KMR::dxl::ControlMode mode = KMR::dxl::ControlMode::POSITION;
-    //robot.setControlModes(mode);
-    //sleep(1);
+    KMR::dxlP1::ControlMode mode = KMR::dxlP1::ControlMode::POSITION;
+    robot.setControlModes(mode);
+    sleep(1);
 
     // Set min/max positions
-    //vector<float> minPositions = {-M_PI, -2*M_PI/3};
-    //vector<float> maxPositions = {+M_PI, +M_PI/2};
-    //robot.setMinPosition(minPositions);
-    //usleep(50*1000);
-    //robot.setMaxPosition(maxPositions);
-    //usleep(50*1000);
+    vector<float> minPositions = {-2*M_PI/3};
+    vector<float> maxPositions = {+M_PI/2};
+    robot.setMinPosition(minPositions);
+    usleep(50*1000);
+    robot.setMaxPosition(maxPositions);
+    usleep(50*1000);
     robot.enableMotors();    
     
     // Required variables

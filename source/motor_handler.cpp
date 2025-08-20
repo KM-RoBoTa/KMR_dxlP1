@@ -554,9 +554,12 @@ bool MotorHandler::getSpeed(int id, float speed)
 ****************************************************************************/
 
 /**
- * @brief       Reset multiturn motors flagged as needing a reset.
- * @note        Make sure the motors had enough time to execute the goal position command before 
- *              calling this function. Failure to do so results in undefined behavior.
+ * @brief   Reset multiturn motors flagged as needing a reset.
+ * @note    Make sure the motors had enough time to execute the goal position command before 
+ *          calling this function. Failure to do so results in undefined behavior.
+ * @note    The official protocol 1's documentation is lying: rebooting is NOT implemented,
+ *          only in protocol 2, which may even have a specific function to reset the offset.
+ *          Thus, there is still need to swap modes back and forth
  */
 void MotorHandler::resetMultiturnMotors()
 {
