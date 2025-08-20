@@ -24,7 +24,8 @@ struct AX_12A_P1 : ControlTable {
 	AX_12A_P1 ()
     {
         bulkRead = 0;
-        jointValue = 512;
+        jointValueMin = 1;
+        jointValueMax = 1023;
 
 		// EEPROM
         modelNumber.addr = 0;

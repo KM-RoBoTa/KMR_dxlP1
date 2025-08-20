@@ -76,12 +76,6 @@ public:
     bool setPositions(std::vector<int> ids, std::vector<float> positions);
     bool setPosition(int id, float position);
 
-
-    bool setTorques(std::vector<float> torques);
-    bool setTorques(std::vector<int> ids, std::vector<float> torques);
-    bool setTorque(int id, float torque);
-
-
     // Feedback functions
 
     bool getPositions(std::vector<float>& positions);
@@ -110,7 +104,6 @@ private:
     // Base controls
     
     Writer* m_positionWriter = nullptr;
-    Writer* m_torqueWriter = nullptr;
     Reader* m_positionReader = nullptr;
     Reader* m_speedReader = nullptr;
 

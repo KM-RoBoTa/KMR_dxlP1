@@ -78,7 +78,8 @@ struct Field {
  */
 struct ControlTable {
     bool bulkRead = 0;  // If a model technically supports bulkRead (= MX or X series)
-    int32_t jointValue = UNDEF;
+    int32_t jointValueMin = UNDEF;
+    int32_t jointValueMax = UNDEF;
     int32_t multiturnValue = UNDEF;
 
     Field modelNumber;

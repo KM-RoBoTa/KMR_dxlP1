@@ -202,7 +202,7 @@ Field Hal::getControlField(ControlTable motor, ControlTableItem item)
     }    
 
     if (field.length == UNDEF) {
-        cout << "Error: this field does not exist for this motor or protocol!" << endl;
+        cout << "Error: the control field "<< static_cast<int>(item) << "does not exist for this motor or protocol!" << endl;
         exit(1);
     }
 

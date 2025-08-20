@@ -89,8 +89,10 @@ void Reader::checkBulkAvailability()
         m_bulkReadIds.clear();
         m_basicReadIds.clear();
     } 
-    else
+    else {
+        m_bulkAvailable = 1;
         m_groupBulkReader = new dynamixel::GroupBulkRead(portHandler_, packetHandler_);
+    }
 }
 
 bool Reader::read(std::vector<float>& fbckValues)

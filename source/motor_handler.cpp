@@ -52,7 +52,6 @@ MotorHandler::MotorHandler(vector<int> ids, const char *port_name, int baudrate)
 
         // Integrated base command handlers
         m_positionWriter = getNewWriter(ControlTableItem::GOAL_POSITION, m_ids);
-        m_torqueWriter = getNewWriter(ControlTableItem::GOAL_TORQUE, m_ids);
         m_positionReader = getNewReader(ControlTableItem::PRESENT_POSITION, m_ids);
         m_speedReader = getNewReader(ControlTableItem::PRESENT_VELOCITY, m_ids);
 
@@ -70,7 +69,6 @@ MotorHandler::~MotorHandler()
     // Delete handlers created on heap
     deleteWriter(m_motorEnableWriter);
     deleteWriter(m_positionWriter); 
-    deleteWriter(m_torqueWriter);
     deleteReader(m_speedReader);
     deleteReader(m_positionReader);
     deleteWriter(m_maxPositionWriter);
@@ -79,7 +77,6 @@ MotorHandler::~MotorHandler()
     // Security against double freeing
     m_motorEnableWriter = nullptr;
     m_positionWriter = nullptr;
-    m_torqueWriter = nullptr;
     m_positionReader = nullptr;
     m_speedReader = nullptr;
     m_maxPositionWriter = nullptr;
@@ -279,7 +276,8 @@ bool MotorHandler::disableMotor(int id)
  */
 bool MotorHandler::setControlModes(std::vector<int> ids, std::vector<ControlMode> controlModes)  
 {
-    vector<int32_t> vals(ids.size(), 0);
+    vector<int32_t> minVals(ids.size(), 0);
+    vector<int32_t> maxVals(ids.size(), 0);
 
     for (int i=0; i<ids.size(); i++) {
         int idx = getIndex(m_ids, ids[i]);
@@ -288,12 +286,24 @@ bool MotorHandler::setControlModes(std::vector<int> ids, std::vector<ControlMode
         switch (controlModes[i])
         {
         case ControlMode::POSITION:
-            vals[i] = table.jointValue;
+            minVals[i] = table.jointValueMin;
+            maxVals[i] = table.jointValueMax;
+            
+            if (minVals[i] == UNDEF || maxVals[i] == UNDEF) {
+                cout << "Error! Position mode values not set for model " << m_models[idx] << endl;
+                exit(1);
+            }
             break;
 
         case ControlMode::MULTITURN:
-            vals[i] = table.multiturnValue;
+            minVals[i] = table.multiturnValue;
+            maxVals[i] = table.multiturnValue;
             m_hal->setMultiturnMode(ids[i]);
+
+            if (minVals[i] == UNDEF || maxVals[i] == UNDEF) {
+                cout << "Error! Multiturn mode values not set for model " << m_models[idx] << endl;
+                exit(1);
+            }
             break;
 
         default:
@@ -303,8 +313,10 @@ bool MotorHandler::setControlModes(std::vector<int> ids, std::vector<ControlMode
         }
     }
 
-    bool successMax = m_maxPositionWriter->sendParameter(ids, vals);
-    bool successMin = m_minPositionWriter->sendParameter(ids, vals);
+    bool successMax = m_maxPositionWriter->sendParameter(ids, maxVals);
+    usleep(500);
+    bool successMin = m_minPositionWriter->sendParameter(ids, minVals);
+    usleep(500);
 
     bool success = 0;
     if (successMin && successMax)
@@ -357,7 +369,10 @@ bool MotorHandler::setReturnDelayTime(float val)
                     portHandler_, packetHandler_, m_hal);
 
     vector<float> vals(m_nbrMotors, val);
-    return(writer.send(vals));
+    bool success = writer.send(vals);
+    usleep(500);
+
+    return success;
 }
 
 
@@ -370,7 +385,10 @@ bool MotorHandler::setMinVoltage(std::vector<float> minVoltages)
     Writer writer(ControlTableItem::MIN_VOLTAGE_LIMIT, m_ids, m_models,
                     portHandler_, packetHandler_, m_hal);
 
-    return(writer.send(minVoltages));
+    bool success = writer.send(minVoltages);
+    usleep(500);
+
+    return success;
 }
 
 /**
@@ -380,6 +398,7 @@ bool MotorHandler::setMinVoltage(std::vector<float> minVoltages)
 bool MotorHandler::setMinVoltage(float minVoltage)
 {
     vector<float> minVoltages(m_nbrMotors, minVoltage);
+
     return(setMinVoltage(minVoltages));
 }
 
@@ -392,7 +411,10 @@ bool MotorHandler::setMaxVoltage(std::vector<float> maxVoltages)
     Writer writer(ControlTableItem::MAX_VOLTAGE_LIMIT, m_ids, m_models,
                     portHandler_, packetHandler_, m_hal);
 
-    return(writer.send(maxVoltages));
+    bool success = writer.send(maxVoltages);
+    usleep(500);
+
+    return success;
 }
 
 /**
@@ -402,6 +424,7 @@ bool MotorHandler::setMaxVoltage(std::vector<float> maxVoltages)
 bool MotorHandler::setMaxVoltage(float maxVoltage)
 {
     vector<float> maxVoltages(m_nbrMotors, maxVoltage);
+    
     return(setMaxVoltage(maxVoltages));
 }
 
@@ -422,7 +445,10 @@ bool MotorHandler::setMinPosition(std::vector<float> minPositions)
         exit(1);
     }
 
-    return(m_minPositionWriter->send(minPositions));
+    bool success = m_minPositionWriter->send(minPositions);
+    usleep(1*1000);
+
+    return success;
 }
 
 /**
@@ -432,6 +458,7 @@ bool MotorHandler::setMinPosition(std::vector<float> minPositions)
 bool MotorHandler::setMinPosition(float minPosition)
 {
     vector<float> minPositions(m_nbrMotors, minPosition);
+    
     return(setMinPosition(minPositions));
 }
 
@@ -447,7 +474,10 @@ bool MotorHandler::setMaxPosition(std::vector<float> maxPositions)
         exit(1);
     }
 
-    return(m_maxPositionWriter->send(maxPositions));
+    bool success = m_maxPositionWriter->send(maxPositions);
+    usleep(1*1000);
+
+    return success;
 }
 
 /**
@@ -457,6 +487,7 @@ bool MotorHandler::setMaxPosition(std::vector<float> maxPositions)
 bool MotorHandler::setMaxPosition(float maxPosition)
 {
     vector<float> maxPositions(m_nbrMotors, maxPosition);
+
     return(setMaxPosition(maxPositions));
 }
 
@@ -481,26 +512,6 @@ bool MotorHandler::setPositions(std::vector<int> ids, std::vector<float> positio
 bool MotorHandler::setPosition(int id, float position)
 {
     return(m_positionWriter->send(id, position));
-}
-
-/**
- * @brief       Set the currents of all motors
- * @param[in]   currents Goal currents of all motors [A]
- */ 
-
-bool MotorHandler::setTorques(std::vector<float> torques)
-{
-    return(m_torqueWriter->send(torques));
-}
-
-bool MotorHandler::setTorques(std::vector<int> ids, std::vector<float> torques)
-{
-    return(m_torqueWriter->send(ids, torques));
-}
-
-bool MotorHandler::setTorque(int id, float torque)
-{
-    return(m_torqueWriter->send(id, torque));
 }
 
 

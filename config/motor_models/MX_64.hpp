@@ -24,7 +24,8 @@ struct MX_64_P1 : ControlTable {
 	MX_64_P1 ()
     {
         bulkRead = 1;
-        jointValue = 1024;
+        jointValueMin = 1;
+        jointValueMax = 4095;
         multiturnValue = 4095;
 
 		// EEPROM
