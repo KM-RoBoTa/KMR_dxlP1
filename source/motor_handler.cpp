@@ -165,7 +165,7 @@ Writer* MotorHandler::getNewWriter(ControlTableItem field, vector<int> ids)
             cout << "Error! Unknown ID during Writer creation. Exiting" << endl;
             exit(1);
         }
-        models[i] = m_models[i];
+        models[i] = m_models[idx];
     }
 
     Writer* writer = new Writer(field, ids, models, portHandler_, packetHandler_, m_hal);
@@ -190,7 +190,7 @@ Reader* MotorHandler::getNewReader(ControlTableItem field, vector<int> ids)
             cout << "Error! Unknown ID during Reader creation. Exiting" << endl;
             exit(1);
         }
-        models[i] = m_models[i];
+        models[i] = m_models[idx];
     }
 
     Reader* reader = new Reader(field, ids, models, portHandler_, packetHandler_, m_hal);
